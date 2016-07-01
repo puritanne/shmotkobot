@@ -201,8 +201,23 @@ getMe <- function()
 #' getUpdates
 #'
 #' Receive incoming updates
-getUpdates <- function(){
-  r <- private$request('getUpdates')
+#' getUpdates
+#'
+#' Receive incoming updates
+#' @param offset Identifier of the first update to be returned
+#'     returned.
+#' @param limit Limits the number of updates to be retrieved. Values
+#'     between 1-100 are accepted. Defaults to 100
+getUpdates <- function(offset = NULL,
+                       limit = NULL)
+{
+  ## params
+  offset <- check_param(offset, 'int')
+  limit <- check_param(limit, 'int')
+  ## request body
+  body <- make_body('offset' = offset,
+                    'limit' = limit)
+  r <- private$request('getUpdates', body = body)
   if (r$status == 200){
     rval <- parsed_content(r)
     return(rval)
@@ -210,6 +225,7 @@ getUpdates <- function(){
   else
     invisible(NULL)
 }
+
 
 #' getUserProfilePhotos
 #'

@@ -6,7 +6,7 @@ productList <- readRDS("data/productList.rds")
 # Размечаем данные
 # p_tops
 
-p_tops <- as.data.frame(productList$p_tshirts)
+p_tops <- as.data.frame(productList$p_tops)
 
 p_tops$prop_design <- NA
 p_tops$prop_design <- ifelse(grepl("Ультрамодный|оригин|Оригин", p_tops$lamoda_desc), 1, p_tops$prop_design)
@@ -189,12 +189,14 @@ shortlist.pear <- p_tops %>% filter(score_pear >= 6) %>%
   
   filter(prop_tailored.fit==1) %>%
   filter(is.na(prop_flared.fit)) %>% 
-  arrange(desc(score_pear))
+  filter(grepl("Размер:46", param)) %>%
+  arrange(desc(score_pear)) 
 
-shortlist.hourglass <- p_tops %>% filter(score_hourglass >= 1) %>%
+shortlist.hourglass <- p_tops %>% filter(score_hourglass >= 6) %>%
   filter(duplicated(description) == FALSE) %>%
   
   filter(grepl("-лето", description)) %>%
   filter(!grepl("Размер:6", param)) %>%
   filter(prop_mono.color==1) %>%
+  filter(grepl("Размер:46", param)) %>%
   arrange(desc(score_hourglass))

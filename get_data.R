@@ -18,25 +18,6 @@ fileUrl <- 'http://export.admitad.com/ru/webmaster/websites/449834/products/expo
 
 get_products <- function(fileUrl) {
   data <- read.csv(url(fileUrl), header = TRUE, sep = ";", encoding="UTF-8")
-  data$lamoda_desc <- NA
-  data
-}
-
-update_products <- function(old.data, fileUrl) {
-  new.data <- get_products(fileUrl)
-  
-  keys <- c("id")
-  df.old <- data.table(old.data, key=keys)
-  df.new <- data.table(new.data, key=keys)
-  
-  df.added.records <- df.new[df.old, isOld := 1L] %>% filter(is.na(isOld))
-  
-  df.deleted.records <- df.old[df.new, isSaved := 1L] %>% filter(is.na(isSaved))
-  df.deleted.records[,isSaved:=NULL]
-  
-  data <- rbind (old.data, df.added.records) %>%
-    subset(!(id %in% df.deleted.records$id))
-  
   data
 }
 
@@ -66,29 +47,37 @@ get_product_descriptions <- function(product_df) {
 ######
 # Code
 
-# init
-# only run once
 products <- get_products(fileUrl)
-saveRDS(products, "data/products_all_lamoda.rds")
+saveRDS(products, "products_all_lamoda.rds")
 
-#work
-old.products <- readRDS("data/products_all_lamoda.rds")
+# Убираем дубликаты
+p_norm <-  products %>% group_by(categoryId, vendorCode, name, description, picture, price, url, lamoda_desc) %>% 
+  summarise(param=paste(param, collapse=" ")) %>%
+  ungroup() 
 
-products <- update_products(old.products, fileUrl)
-saveRDS(products, "data/products_all_lamoda.rds")
+# Выбираем только те шмотки, с которыми работаем
+
+p_work <- p_norm %>% 
+  filter (grepl ("Блузки и кофточки", categoryId))
+
+# Получаем описания
+
+descriptions <- readRDS("data/descriptions.rds")
+
+p_work <- merge (p_work, descriptions, by="url", all.x=TRUE)
+p_work <- p_work %>% get_product_descriptions()
+
+descriptions <- p_work %>%
+  filter(!is.na(lamoda_desc)) %>%
+  select(url, lamoda_desc)
+
+saveRDS(descriptions, "data/descriptions.rds")
+
+# Формируем итоговый список товаров
 
 productList <- list()
-productList[["p_tops"]] <- products %>% 
-  filter (grepl ("Блузки и кофточки", categoryId)) %>%
-  filter(duplicated(url) == FALSE)
-productList[["p_tshirts"]] <- products %>% 
-  filter (grepl ("Женская одежда/Футболки и топы", categoryId)) %>%
-  filter(duplicated(url) == FALSE)
-
-productList$p_tops[1:nrow(productList$p_tops),] <- productList$p_tops[1:nrow(productList$p_tops),] %>% get_product_descriptions()
-productList$p_tshirts[1:nrow(productList$p_tshirts),] <- productList$p_tshirts[1:nrow(productList$p_tshirts),] %>% get_product_descriptions()
+productList[["p_tops"]] <- p_work %>% 
+  filter (grepl ("Блузки и кофточки", categoryId))
 
 saveRDS(productList, "data/productList.rds")
 
-
- 

@@ -11,17 +11,17 @@ bot <- TGBot$new(token = "227815923:AAHIlLFG8QowvPpq0aWtHqrQJY2A3QW9Ibw")
 bot$getMe()
 default_chat_id <- 209952956
 bot$set_default_chat_id(default_chat_id)
-old.updates <- bot$getUpdates()
+#old.updates <- bot$getUpdates()
 
 adressbook <- data.frame(
-  chat_id=1111,
+  chat_id=as.numeric(1111),
   first_name="Olga",
   last_name="D",
-  param_shoulders=as.factor("average"),
-  param_chest=as.factor("average"),
-  param_waist=as.factor("narrow"),
-  param_hips=as.factor("wide"),
-  param_btype=as.factor("pear")
+  param_shoulders="average",
+  param_breast="average",
+  param_waist="narrow",
+  param_hips="wide",
+  param_btype="pear"
 )
 
 
@@ -29,7 +29,7 @@ adressbook <- data.frame(
 
 matchingClothes <- shortlist.hourglass
             
-for (k in 1:10) {
+for (k in 1:nrow(matchingClothes)) {
     download.file(as.character(matchingClothes$picture[k]), "pic.jpeg")
     bot$sendPhoto('pic.jpeg', caption=matchingClothes$score_hourglass[k], chat_id=default_chat_id)
     bot$sendMessage (text= matchingClothes$url[k], parse_mode = 'markdown', chat_id=default_chat_id)
@@ -37,14 +37,13 @@ for (k in 1:10) {
 }
 
 #Главный цикл бота
+offset <- NULL
 
 repeat {
-  updates <- bot$getUpdates()
-  updates$is.old <- updates$update_id %in% old.updates$update_id
-  
+  updates <- bot$getUpdates(offset=offset)
+
   if (!is.null(nrow(updates)))
     for (i in 1:nrow(updates)) {
-      if (updates[i,]$is.old == FALSE) {
         for (j in 1:nrow(updates[i,]$message)) {
 
 ### Основная логика бота          
@@ -59,14 +58,13 @@ repeat {
                            first_name=updates[i,]$message$from$first_name,
                            last_name=updates[i,]$message$from$last_name,
                            param_shoulders=NA, 
-                           param_chest=NA, 
+                           param_breast=NA, 
                            param_waist=NA, 
                            param_hips=NA, 
                            param_btype=NA)
               )
               saveRDS(adressbook, "data/adressbook.RDS")
             }
-            
             
             bot$sendMessage (text= paste('Привет! Я помогаю подбирать шмотки в интернет-магазинах. Сначала я задам несколько вопросов про тип фигуры и размер, а потом выберу из каталога Ламоды те вещи, которые, скорее всего, будут нормально сидеть.'), 
                              parse_mode = 'markdown', 
@@ -107,11 +105,14 @@ repeat {
           
           if (grepl("Широкие, атлетические|Узкие, покатые|Ни широкие, ни узкие, что-то среднее", updates[i,]$message$text)) {
             
-#             adressbook <- adressbook %>% filter(chat_id == updates[i,]$message$chat$id) %>%
-#               mutate(prop_shoulders=ifelse(updates[i,]$message$text=="Широкие, атлетические", as.factor("wide"), prop_shoulders)) %>%
-#               mutate(prop_shoulders=ifelse(updates[i,]$message$text=="Узкие, покатые", as.factor("narrow"), prop_shoulders)) %>%
-#               mutate(prop_shoulders=ifelse(updates[i,]$message$text=="Ни широкие, ни узкие, что-то среднее", as.factor("average"), prop_shoulders))
-            
+             c.id<-updates[i,]$message$chat$id
+             c.text<-updates[i,]$message$text
+             
+             adressbook[adressbook$chat_id==c.id,] <- adressbook[adressbook$chat_id==c.id,] %>%
+               mutate(param_shoulders = ifelse(c.text=="Широкие, атлетические", "wide", param_shoulders)) %>%
+               mutate(param_shoulders = ifelse(c.text=="Узкие, покатые", "narrow", param_shoulders)) %>%
+               mutate(param_shoulders = ifelse(c.text=="Ни широкие, ни узкие, что-то среднее", "average", param_shoulders)) 
+                                              
             bot$sendMessage (text= paste('Какого объема Ваша грудь?'), 
                 reply_markup='{"keyboard":[["Маленькая"],["Средняя"],["Большая"]]}',
                            parse_mode = 'markdown', 
@@ -120,6 +121,15 @@ repeat {
           }
           
           if (grepl("Маленькая|Средняя|Большая", updates[i,]$message$text)) {
+            
+            c.id<-updates[i,]$message$chat$id
+            c.text<-updates[i,]$message$text
+            
+            adressbook[adressbook$chat_id==c.id,] <- adressbook[adressbook$chat_id==c.id,] %>%
+              mutate(param_breast = ifelse(c.text=="Маленькая", "small", param_breast)) %>%
+              mutate(param_breast = ifelse(c.text=="Средняя", "average", param_breast)) %>%
+              mutate(param_breast = ifelse(c.text=="Большая", "big", param_breast)) 
+            
              bot$sendMessage (text= paste('Насколько выражена талия?'), 
                               reply_markup='{"keyboard":[["Прямая, почти не выражена"],["Объемная, есть круглый животик"],["Сравнительно узкая, ярко выражена"]]}',
                               parse_mode = 'markdown', 
@@ -128,6 +138,15 @@ repeat {
           }
           
           if (grepl("Прямая, почти не выражена|Объемная, есть круглый животик|Сравнительно узкая, ярко выражена", updates[i,]$message$text)) {
+            
+            c.id<-updates[i,]$message$chat$id
+            c.text<-updates[i,]$message$text
+            
+            adressbook[adressbook$chat_id==c.id,] <- adressbook[adressbook$chat_id==c.id,] %>%
+              mutate(param_waist = ifelse(c.text=="Сравнительно узкая, ярко выражена", "small", param_waist)) %>%
+              mutate(param_waist = ifelse(c.text=="Прямая, почти не выражена", "average", param_waist)) %>%
+              mutate(param_waist = ifelse(c.text=="Объемная, есть круглый животик", "big", param_waist)) 
+            
             bot$sendMessage (text= paste('Что лучше подходит к описанию Ваших бедер?'), 
                              reply_markup='{"keyboard":[["Узкие, мальчишеские"],["Широкие, округлые"],["Ни узкие, ни широкие, что-то среднее"]]}',
                              parse_mode = 'markdown', 
@@ -135,14 +154,28 @@ repeat {
             Sys.sleep(1)
           }
           
+          if (grepl("Узкие, мальчишеские|Широкие, округлые|Ни узкие, ни широкие, что-то среднее", updates[i,]$message$text)) {
+            
+            c.id<-updates[i,]$message$chat$id
+            c.text<-updates[i,]$message$text
+            
+            adressbook[adressbook$chat_id==c.id,] <- adressbook[adressbook$chat_id==c.id,] %>%
+              mutate(param_hips = ifelse(c.text=="Узкие, мальчишеские", "small", param_hips)) %>%
+              mutate(param_hips = ifelse(c.text=="Ни узкие, ни широкие, что-то среднее", "average", param_hips)) %>%
+              mutate(param_hips = ifelse(c.text=="Широкие, округлые", "big", param_hips)) 
+            
+            bot$sendMessage (text= paste('Спасибо! Мы все запомнили!'), 
+                             reply_markup='{}',
+                             parse_mode = 'markdown', 
+                             chat_id=updates[i,]$message$chat$id)
+          }
+          
           
           
 ### Конец основной логики бота            
         }
-      }
-      updates[i,]$is.answered <- TRUE
     }
-  old.updates <- updates
+  offset <- max(updates$update_id+1)
 }
 
 
