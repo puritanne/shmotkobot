@@ -51,7 +51,7 @@ products <- get_products(fileUrl)
 saveRDS(products, "products_all_lamoda.rds")
 
 # Убираем дубликаты
-p_norm <-  products %>% group_by(categoryId, vendorCode, name, description, picture, price, url, lamoda_desc) %>% 
+p_norm <-  products %>% group_by(categoryId, vendorCode, name, description, picture, price, url) %>% 
   summarise(param=paste(param, collapse=" ")) %>%
   ungroup() 
 

@@ -134,7 +134,9 @@ p_tops$score_pear <- ifelse(is.na(p_tops$prop_design), 0, as.numeric(p_tops$prop
   ifelse(is.na(p_tops$prop_chest.details), 0, as.numeric(p_tops$prop_chest.details)) + 
   ifelse(is.na(p_tops$prop_shoulder.pads), 0, as.numeric(p_tops$prop_shoulder.pads)) +
   ifelse(is.na(p_tops$prop_reglan.sleeve), 1, 0) +
-  1 # за параметр длины
+  
+  1  # за параметр длины 
+
 
 p_tops$score_hourglass <- ifelse(is.na(p_tops$prop_tailored.fit), 0, as.numeric(p_tops$prop_tailored.fit)) +
   ifelse(is.na(p_tops$prop_acc.waist), 0, as.numeric(p_tops$prop_acc.waist)) +
@@ -184,10 +186,9 @@ p_tops$score_rectangle <- ifelse(is.na(p_tops$prop_straight.fit), 0, as.numeric(
 shortlist.pear <- p_tops %>% filter(score_pear >= 6) %>% 
   filter(duplicated(description) == FALSE) %>%
   
-  filter(grepl("-лето", description)) %>%
   filter(!grepl("Размер:6", param)) %>%
   
-  filter(prop_tailored.fit==1) %>%
+  filter((prop_tailored.fit==1) | (prop_acc.waist==1)) %>%
   filter(is.na(prop_flared.fit)) %>% 
   filter(grepl("Размер:46", param)) %>%
   arrange(desc(score_pear)) 
@@ -200,3 +201,16 @@ shortlist.hourglass <- p_tops %>% filter(score_hourglass >= 6) %>%
   filter(prop_mono.color==1) %>%
   filter(grepl("Размер:46", param)) %>%
   arrange(desc(score_hourglass))
+
+# Возвращаем в productList
+
+productList$p_tops <- p_tops
+saveRDS(productList, "data/productList.rds")
+
+##
+shortlist.pear.jshirts <- shortlist.pear %>% filter(grepl("Рубашка джинсовая", description))
+shortlist.pear.shirts <- shortlist.pear %>% filter(grepl("Рубашка", description)) %>%
+  filter(!(name %in% shortlist.pear.jshirts$name)) %>%
+  mutate(score_pear = ifelse(grepl("Цвет: голубой|Цвет: белый", description), score_pear+1, score_pear))
+  
+shortlist.pear.blouses <- shortlist.pear %>% filter(grepl("Блуза", description))
