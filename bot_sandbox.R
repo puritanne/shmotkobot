@@ -1,15 +1,16 @@
 library("dplyr")
 source("telegramr.r")
 
+source('config.R')
+
 Sys.setlocale("LC_ALL", "Ru_Ru")
 
 # Setup my bot
 
 #Sys.setenv(R_TELEGRAM_BOT_GetNewDress_bot="227815923:AAHIlLFG8QowvPpq0aWtHqrQJY2A3QW9Ibw")
 
-bot <- TGBot$new(token = "227815923:AAHIlLFG8QowvPpq0aWtHqrQJY2A3QW9Ibw")
+bot <- TGBot$new(token = bot_token)
 bot$getMe()
-default_chat_id <- 209952956
 bot$set_default_chat_id(default_chat_id)
 #old.updates <- bot$getUpdates()
 

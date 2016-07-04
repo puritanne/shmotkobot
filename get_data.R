@@ -2,13 +2,14 @@ library (dplyr)
 library (rvest)
 library (data.table)
 
+source('config.R')
+
 Sys.setlocale("LC_ALL", "Ru_Ru")
 
 ######
 # CONSTS
 #
 
-fileUrl <- 'http://export.admitad.com/ru/webmaster/websites/449834/products/export_adv_products/?user=puritanne&code=a61b66e9b9&feed_id=1001&format=csv'
 
 ####### 
 # FUNCTIONS
