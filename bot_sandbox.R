@@ -33,7 +33,7 @@ answers <- data.frame(
 
 # Тестовый код для того, чтобы быстро отправлять мне товары
 
-matchingClothes <- shortlist.pear.blouses
+matchingClothes <- shortlist.pear
             
 for (k in 1:nrow(matchingClothes)) {
     download.file(as.character(matchingClothes$picture[k]), "pic.jpeg")

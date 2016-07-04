@@ -30,11 +30,12 @@ get_product_descriptions <- function(product_df) {
   if (nrow(df)!=0) {
       for (i in 1:nrow(df)) {
         if (is.na(df[i,]$lamoda_desc)) {
-          try(
+          try({
               df[i,]$lamoda_desc <- read_html(as.character(df[i,]$url)) %>%
                 html_nodes("div.ii-product__description-text") %>%
                 html_text() %>% 
-                toString(),
+                toString()
+              print (df[i,]$lamoda_desc)},
               silent=TRUE
               )
         }
@@ -51,14 +52,15 @@ products <- get_products(fileUrl)
 saveRDS(products, "products_all_lamoda.rds")
 
 # Убираем дубликаты
-p_norm <-  products %>% group_by(categoryId, vendorCode, name, description, picture, price, url) %>% 
+p_norm <-  products %>% group_by(categoryId, real_category_name, typePrefix, vendorCode, name, description, picture, price, url) %>% 
   summarise(param=paste(param, collapse=" ")) %>%
   ungroup() 
 
 # Выбираем только те шмотки, с которыми работаем
 
 p_work <- p_norm %>% 
-  filter (grepl ("Блузки и кофточки", categoryId))
+  filter(grepl("Женская одежда", categoryId)) %>%
+  filter (grepl ("Блуза|Рубашка|Рубашка джинсовая|Футболка", typePrefix))
 
 # Получаем описания
 
@@ -76,8 +78,12 @@ saveRDS(descriptions, "data/descriptions.rds")
 # Формируем итоговый список товаров
 
 productList <- list()
-productList[["p_tops"]] <- p_work %>% 
-  filter (grepl ("Блузки и кофточки", categoryId))
+productList[["p_shirts"]] <- p_work %>% 
+  filter (typePrefix == "Рубашка")
+productList[["p_jeans_shirts"]] <- p_work %>% 
+  filter (typePrefix == "Рубашка джинсовая")
+productList[["p_blouse"]] <- p_work %>% 
+  filter (typePrefix == "Блуза")
 
 saveRDS(productList, "data/productList.rds")
 
